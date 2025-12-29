@@ -1,6 +1,6 @@
 created a tcp socket using socket()
 with arguments =>
-socket(AF_INET, SOCK_STREAM, 0);
+int socket(AF_INET, SOCK_STREAM, 0);
 
 if socket creation fails i.e if tcp socket = -1
 then error is returned 
@@ -22,7 +22,7 @@ struct in_addr {
 then binding part 
 https://man.archlinux.org/man/bind.2
 
-as the name suggests binding something ... 
+as the name suggests .. binding something ... 
 bind() tells the kernel to attach this socket to this local address
 
 addr = [ip, port]
@@ -46,3 +46,70 @@ it means .. i allow as many queued connections as the kernel allows
 now accept()
 https://man.archlinux.org/man/accept.2
 accept() blocks until the kernel has a completed TCP connection, then returns a new socket file descriptor representing that single client connection.
+
+made a handle_client function 
+used read() whats happening here now?
+
+https://man.archlinux.org/man/read.2 
+
+the browser constructs http headers by assembling protocol mandated strings in user space ..
+then writes those raw bytes into tcp socket ..
+read() is simply retrieving those same bytes on our side 
+below is what read() read 
+
+
+socket creation succeeded
+bind succeeded
+listen succeeded
+waiting for connections...
+got a connection
+
+----
+=> GET / HTTP/1.1
+Host: localhost:1337
+User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:
+=> 146.0) Gecko/20100101 Firefox/146.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,
+=> */*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate, br, zstd
+Connection: k
+=> eep-alive
+Upgrade-Insecure-Requests: 1
+Sec-Fetch-Dest: document
+Sec-Fetch-Mode: navigate
+Sec-Fe
+=> tch-Site: none
+Priority: u=0, i
+
+
+evolution of http:
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Evolution_of_HTTP
+https://en.wikipedia.org/wiki/HTTP
+
+in this wikipedia page its says that it follows RFC 1945 international standard
+so lets go to RFC 1945 ..
+below given is what is after "HTTP/1.0 200 OK" whether there is newline or something like that 
+https://www.rfc-editor.org/rfc/rfc1945#section-4.1
+
+ Full-Request   = Request-Line             ; Section 5.1
+                        *( General-Header        ; Section 4.3
+                         | Request-Header        ; Section 5.2
+                         | Entity-Header )       ; Section 7.1
+                        CRLF
+                        [ Entity-Body ]          ; Section 7.2
+
+this is given there ... so CRLF is there 
+which means 
+CR - carriage return means \r
+LF - line feed means \n
+
+CRLF = "\r\n" = 0x0D 0x0A
+
+i also asked gpt about this .. i was having a confusion 
+it said -
+
+CRLF is strictly defined by the HTTP RFC as the byte sequence \r\n, 
+and every compliant HTTP implementation must use it exactly.
+This isn’t opinion, habit, or OS behavior — it’s protocol law.
+
