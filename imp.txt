@@ -106,7 +106,7 @@ LF - line feed means \n
 
 CRLF = "\r\n" = 0x0D 0x0A
 
-i also asked gpt about this .. i was having a confusion 
+i also asked gpt about this .. i was having confusion 
 it said -
 
 CRLF is strictly defined by the HTTP RFC as the byte sequence \r\n, 
