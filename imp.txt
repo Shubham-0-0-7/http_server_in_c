@@ -83,6 +83,17 @@ Sec-Fe
 Priority: u=0, i
 
 
+we were facing a problem which goes like:                         
+socket creation succeeded
+bind(): Address already in use
+
+so we used setsockopt ... what it did was ... it told the kernel to relax its 
+default rule and allow your server to re bind to the same port even if previous 
+tcp connections are still in TIME_WAIT
+
+SO_REUSEADDR tells the kernel to allow rebinding a port even if old TCP connections are still lingering in TIME_WAIT ... 
+this solves “address already in use” during restart 
+
 evolution of http:
 https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Evolution_of_HTTP
 https://en.wikipedia.org/wiki/HTTP
@@ -113,3 +124,6 @@ CRLF is strictly defined by the HTTP RFC as the byte sequence \r\n,
 and every compliant HTTP implementation must use it exactly.
 This isn’t opinion, habit, or OS behavior — it’s protocol law.
 
+below given is the request line format given in section 5.1 of rfc 1945
+Request-Line = Method SP Request-URI SP HTTP-Version CRLF
+https://www.rfc-editor.org/rfc/rfc1945#section-5.1

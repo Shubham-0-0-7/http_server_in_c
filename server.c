@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -7,6 +8,72 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <string.h>
+
+// const char* CRLF = "\r\n";
+// const char* SP = " ";
+// typedef struct{
+//     char* method;
+//     char* uri;
+//     char* version;
+// } http_req_line;
+
+// typedef enum{
+//     PARSE_OK,
+//     PARSE_ERR,
+// } http_res;
+
+// typedef struct{
+//     const char* start;
+//     const char* end;
+// } string_view;
+
+// typedef struct{
+//     string_view splits;
+//     size_t cnt;
+//     size_t capac;
+// } string_splits;
+
+// static string_splits split_string(const char* str, size_t len, char spilt_by){
+//     string_splits res;
+//     res.splits = calloc(sizeof(string_view), res.capac);
+//     char* start = str;
+//     char* end = NULL;
+//     size_t res_i = 0;
+
+//     for(size_t i=0; i<len; ++i){
+//         if(str[i] == split_by){
+//             res_i.splits[res_i].start = start;
+//             res_i.splits[res_i].end = &str[i];
+//         }
+
+//     }
+// }
+
+// static void free_splits(string_splits* spl){
+//     if(spl){
+//         free(spl->splits);
+//         spl->splits = NULL;
+//     }
+// }
+
+
+// http_req_line http_req_line_init(){
+//     http_req_line line;
+//     line.method = NULL;
+//     line.uri = NULL;
+//     line.version = NULL;
+//     return line;
+// }
+
+
+// http_res parse_req_line(const char* buff, size_t len, http_req_line* req_line){
+//     if(!buff || !req_line){
+//         return PARSE_ERR;
+//     }
+//     req_line->method = "GET"; 
+//     req_line->version = "HTTP/1.0"; 
+//     return PARSE_OK;
+// }
 
 int handle_client(int client_socket){
     ssize_t n = 0;
@@ -58,7 +125,12 @@ int main(void){
     }
     printf("socket creation succeeded\n");
     
-    (void)setsockopt(tcp_socket, SOL_SOCKET, SO_REUSEADDR, &enabled, sizeof(enabled));
+    (void)setsockopt(tcp_socket, 
+        SOL_SOCKET, 
+        SO_REUSEADDR, 
+        &enabled, 
+        sizeof(enabled)
+    );
 
     bind_addr.sin_port = htons(1337);
     bind_addr.sin_family = AF_INET;
