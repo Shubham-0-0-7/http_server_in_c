@@ -127,3 +127,9 @@ This isn’t opinion, habit, or OS behavior — it’s protocol law.
 below given is the request line format given in section 5.1 of rfc 1945
 Request-Line = Method SP Request-URI SP HTTP-Version CRLF
 https://www.rfc-editor.org/rfc/rfc1945#section-5.1
+
+
+tried write parser like as seen in the commented code but yeah nvm ... was not able to comply with such complexity 
+it was getting way too complex so decided to keep it as simple as it could be 
+
+so started working on my handle_client function and edited it so that it can parse 

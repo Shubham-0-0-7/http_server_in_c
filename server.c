@@ -9,6 +9,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+
 // const char* CRLF = "\r\n";
 // const char* SP = " ";
 // typedef struct{
@@ -76,28 +77,29 @@
 // }
 
 int handle_client(int client_socket){
-    ssize_t n = 0;
+    ssize_t n;
     char buff[1024];
-    const char* hello = "HTTP/1.0 200 OK\r\n\r\n<h1>Hello World!</h1>";
+    const char* resp = 
+        "HTTP/1.0 200 OK\r\n"
+        "Content-Length: 18\r\n"
+        "\r\n"
+        "<h1>Hello World!</h1>";
 
-    printf("\n----\n");
-    for( ;; ){
-        memset(buff, 0, sizeof(buff));
-        n = read(client_socket, buff, sizeof(buff)-1);
-        if(n < 0){
-            perror("read(client)");
-            return -1;
-        }
-        if(n == 0){
-            printf("connection closed gracefully!\n");
-            return 0;
-        }
-        printf("REQUEST: \n%s", buff);
-        (void)write(client_socket, hello, strlen(hello));
-        close(client_socket);
-        break;
+    n = read(client_socket, buff, sizeof(buff)-1);
+    if(n < 0){
+        perror("read(client)");
+        return -1;
     }
+    if(n == 0){
+        printf("connection closed gracefully!\n");
+        return 0;
+    }
+    buff[n] = '\0';
     printf("\n----\n");
+    printf("REQUEST:\n%s", buff);
+    printf("\n----\n");
+    write(client_socket, resp, strlen(resp));
+    close(client_socket);
     return 0;
 }
 
