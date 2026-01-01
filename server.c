@@ -9,7 +9,46 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+typedef struct{
+    const char* data;
+    ssize_t len;
+} string_view;
 
+typedef struct{
+    string_view method;
+    string_view uri;
+    string_view version;
+} http_req_line;
+
+
+static char* find_header_end(char* buff, ssize_t len){
+    for(ssize_t i=0; i+3 < len; i++){
+        if(buff[i] == '\r' && buff[i+1] == '\n' && buff[i+2] == '\r' && buff[i+3] == '\n'){
+            return &buff[i];
+        }
+    }
+    return NULL;
+}
+
+/* GET /index.html HTTP/1.1 
+ parse this line
+*/
+static int parse_req_line(char* line, http_req_line* out){
+    char* sp1 = strchr(line, ' ');
+    if(!sp1) return -1;
+    char* sp2 = strchr(sp1+1, ' ');
+    if(!sp2) return -1;
+
+    out->method.data = line;
+    out->method.len = sp1-line;
+
+    out->uri.data = sp1+1;
+    out->uri.len = sp2-(sp1+1);
+
+    out->version.data = sp2+1;
+    out->version.len = strlen(sp2+1);
+    return 0;
+}
 // const char* CRLF = "\r\n";
 // const char* SP = " ";
 // typedef struct{
@@ -77,30 +116,49 @@
 // }
 
 int handle_client(int client_socket){
-    ssize_t n;
-    char buff[1024];
-    const char* resp = 
-        "HTTP/1.0 200 OK\r\n"
-        "Content-Length: 18\r\n"
-        "\r\n"
-        "<h1>Hello World!</h1>";
+    char buff[4096];
+    ssize_t used = 0;
 
-    n = read(client_socket, buff, sizeof(buff)-1);
-    if(n < 0){
-        perror("read(client)");
-        return -1;
-    }
-    if(n == 0){
-        printf("connection closed gracefully!\n");
+    for( ;; ){
+        ssize_t n = read(client_socket,
+            buff + used,
+            sizeof(buff) - used
+        );
+        if(n < 0){
+            perror("read");
+            return -1;
+        }
+        if(n == 0) return 0;
+        used += n;
+        
+        char* header_end = find_header_end(buff, used);
+        if(!header_end){
+            if(used == sizeof(buff)) return -1;
+            continue;
+        }
+
+        char* line_end = strstr(buff, "\r\n");
+        if(!line_end) return -1;
+
+        *line_end = '\0';
+
+        http_req_line req;
+        if(parse_req_line(buff, &req) != 0) return -1;
+
+        printf("METHOD:  %.*s\n", (int)req.method.len, req.method.data);
+        printf("URI:     %.*s\n", (int)req.uri.len, req.uri.data);
+        printf("VERSION: %.*s\n", (int)req.version.len, req.version.data);
+
+        const char* resp = 
+            "HTTP/1.0 200 OK\r\n"
+            "Content-Length: 18\r\n"
+            "\r\n"
+            "<h1>Hello World!</h1>";
+        
+        write(client_socket, resp, strlen(resp));
+        close(client_socket);
         return 0;
     }
-    buff[n] = '\0';
-    printf("\n----\n");
-    printf("REQUEST:\n%s", buff);
-    printf("\n----\n");
-    write(client_socket, resp, strlen(resp));
-    close(client_socket);
-    return 0;
 }
 
 int main(void){
