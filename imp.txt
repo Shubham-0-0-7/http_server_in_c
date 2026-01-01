@@ -173,4 +173,13 @@ source: https://man.archlinux.org/man/memcmp.3
 one thing which is imp:
 routing is after parsing and before writing response
 
+declared a helper function string_from_cstr what it does?
+it converts a normal null terminated string into my internal ptr + len type representation nothing else 
+so that we can compare with parsed string slices 
+
+then the main router logic ...its nothing but an if else on uri
+routing is just pattern mtching on uri 
+like suppose u did localhost:1337/hello  ... so what router will do is simple 
+it will check if /hello exits .. then it will redirect .. if not then will give a 404 error 
+as simple as that 
 
