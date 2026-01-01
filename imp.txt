@@ -133,3 +133,44 @@ tried write parser like as seen in the commented code but yeah nvm ... was not a
 it was getting way too complex so decided to keep it as simple as it could be 
 
 so started working on my handle_client function and edited it so that it can parse 
+
+01/01/2026
+okay so back with a new year 
+wrote parser today that worked and is good i guess .. simply checked where the space is occuring
+and based on that parsed the whole line ... like "GET /index.html HTTP/1.1"
+first is method then uri then version 
+
+also realised that parsing doesnt mean splitting strings blindly .. 
+parsing means respecting the boundaries defined by the protocols
+
+tcp is just a byte stream it doesnt care about line, headers, reqs or responses
+http sits on top of it and defines its own structure ... so before parsing anything i have to first prove that boundary exists
+
+for http we have CRLF that is \r\n for req line and CRLF CRLF for end of headers
+earlier approach of writing split functions and dynamic parsers was wrong at this stage
+because it silently assumed that the whole request already exists in memory ... which tcp does not guarantee 
+
+decided to buffer data and only start parsing after detecting \r\n\r\n
+once headers are complete, request line is guaranteed to be complete as well
+
+parser now works in layers:
+first framing 
+then isolate req line
+then parse method, uri and version
+
+now moving towards the router
+understoof that router is not a part of http ...http only gives method and uri 
+what to do with /hello or /bye or /index.html is totally server side thing
+
+routing is nothing but checking if the parsed uri matches something i decided to support 
+if it does then server
+if it doesnt the 404
+
+used memcmp here 
+The memcmp() function compares the first n bytes (each interpreted as unsigned char) of the memory areas s1 and s2.
+source: https://man.archlinux.org/man/memcmp.3
+
+one thing which is imp:
+routing is after parsing and before writing response
+
+

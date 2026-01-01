@@ -11,18 +11,30 @@
 
 typedef struct{
     const char* data;
-    ssize_t len;
-} string_view;
+    size_t len;
+} string;
 
 typedef struct{
-    string_view method;
-    string_view uri;
-    string_view version;
+    string method;
+    string uri;
+    string version;
 } http_req_line;
 
 
-static char* find_header_end(char* buff, ssize_t len){
-    for(ssize_t i=0; i+3 < len; i++){
+bool string_equal(string l, string r){
+    if(l.len != r.len) return false;
+    return memcmp(l.data, r.data, l.len) == 0;
+}
+
+string string_from_cstr(const char* str) {
+    string s;
+    s.len = strlen(str);
+    s.data = str;
+    return s;
+}
+
+static char* find_header_end(char* buff, size_t len){
+    for(size_t i=0; i+3 < len; i++){
         if(buff[i] == '\r' && buff[i+1] == '\n' && buff[i+2] == '\r' && buff[i+3] == '\n'){
             return &buff[i];
         }
@@ -49,71 +61,24 @@ static int parse_req_line(char* line, http_req_line* out){
     out->version.len = strlen(sp2+1);
     return 0;
 }
-// const char* CRLF = "\r\n";
-// const char* SP = " ";
-// typedef struct{
-//     char* method;
-//     char* uri;
-//     char* version;
-// } http_req_line;
 
-// typedef enum{
-//     PARSE_OK,
-//     PARSE_ERR,
-// } http_res;
+static const char resp_hello[] =
+    "HTTP/1.0 200 OK\r\n"
+    "Content-Length: 7\r\n"
+    "\r\n"
+    "Hellooo";
 
-// typedef struct{
-//     const char* start;
-//     const char* end;
-// } string_view;
+static const char resp_bye[] =
+    "HTTP/1.0 200 OK\r\n"
+    "Content-Length: 5\r\n"
+    "\r\n"
+    "Byeee";
 
-// typedef struct{
-//     string_view splits;
-//     size_t cnt;
-//     size_t capac;
-// } string_splits;
-
-// static string_splits split_string(const char* str, size_t len, char spilt_by){
-//     string_splits res;
-//     res.splits = calloc(sizeof(string_view), res.capac);
-//     char* start = str;
-//     char* end = NULL;
-//     size_t res_i = 0;
-
-//     for(size_t i=0; i<len; ++i){
-//         if(str[i] == split_by){
-//             res_i.splits[res_i].start = start;
-//             res_i.splits[res_i].end = &str[i];
-//         }
-
-//     }
-// }
-
-// static void free_splits(string_splits* spl){
-//     if(spl){
-//         free(spl->splits);
-//         spl->splits = NULL;
-//     }
-// }
-
-
-// http_req_line http_req_line_init(){
-//     http_req_line line;
-//     line.method = NULL;
-//     line.uri = NULL;
-//     line.version = NULL;
-//     return line;
-// }
-
-
-// http_res parse_req_line(const char* buff, size_t len, http_req_line* req_line){
-//     if(!buff || !req_line){
-//         return PARSE_ERR;
-//     }
-//     req_line->method = "GET"; 
-//     req_line->version = "HTTP/1.0"; 
-//     return PARSE_OK;
-// }
+static const char resp_404[] =
+    "HTTP/1.0 404 Not Found\r\n"
+    "Content-Length: 9\r\n"
+    "\r\n"
+    "Not Found";
 
 int handle_client(int client_socket){
     char buff[4096];
@@ -149,13 +114,18 @@ int handle_client(int client_socket){
         printf("URI:     %.*s\n", (int)req.uri.len, req.uri.data);
         printf("VERSION: %.*s\n", (int)req.version.len, req.version.data);
 
-        const char* resp = 
-            "HTTP/1.0 200 OK\r\n"
-            "Content-Length: 18\r\n"
-            "\r\n"
-            "<h1>Hello World!</h1>";
-        
-        write(client_socket, resp, strlen(resp));
+        string route_hello = string_from_cstr("/hello");
+        string route_bye = string_from_cstr("/bye");
+
+        if(string_equal(req.uri, route_hello)){
+            write(client_socket, resp_hello, strlen(resp_hello));
+        }
+        else if(string_equal(req.uri, route_bye)){
+            write(client_socket, resp_bye, strlen(resp_bye));
+        }
+        else{
+            write(client_socket, resp_404, strlen(resp_404));
+        }
         close(client_socket);
         return 0;
     }
@@ -221,7 +191,6 @@ int main(void){
         client_socket = accept(tcp_socket, NULL, NULL);
         printf("got a connection\n");
         rc = handle_client(client_socket);
-        close(client_socket);
     }
 exit:
     close(tcp_socket);
