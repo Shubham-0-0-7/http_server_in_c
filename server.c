@@ -1,4 +1,5 @@
 #include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -9,6 +10,15 @@
 #include <arpa/inet.h>
 #include <string.h>
 
+#define CRLF "\r\n"
+#define SP " "
+
+#define HTTP_STATUS_OK            200
+#define HTTP_STATUS_NOT_FOUND     404
+#define HTTP_STATUS_BAD_REQUEST   400
+#define HTTP_STATUS_SERVER_ERROR  500
+
+const int PORT = 1337;
 typedef struct{
     const char* data;
     size_t len;
@@ -20,6 +30,30 @@ typedef struct{
     string version;
 } http_req_line;
 
+typedef enum http_status : uint16_t{
+    HTTP_RES_OK = 200,
+    HTTP_RES_BAD_REQ = 400,
+    HTTP_RES_NOT_FOUND = 404,
+    HTTP_RES_INT_SERVER_ERR = 500
+} http_status;
+
+typedef struct{
+    const char* version; 
+    http_status status;
+} http_resp_line;
+
+const char* http_status_to_string(http_status status){
+    switch(status){
+    case HTTP_RES_OK:
+        return "OK";
+    case HTTP_RES_BAD_REQ:
+        return "Bad request";
+    case HTTP_RES_INT_SERVER_ERR:
+        return "Internal server error";
+    default:
+        return "Unknown";
+    }
+}
 
 bool string_equal(string l, string r){
     if(l.len != r.len) return false;
@@ -62,27 +96,23 @@ static int parse_req_line(char* line, http_req_line* out){
     return 0;
 }
 
-static const char resp_hello[] =
-    "HTTP/1.0 200 OK\r\n"
-    "Content-Length: 7\r\n"
-    "\r\n"
-    "Hellooo";
+static const char resp_hello[] = "Hellooo";
+static const char resp_bye[] = "Byeee";
+static const char resp_404[] = "Not Found";
 
-static const char resp_bye[] =
-    "HTTP/1.0 200 OK\r\n"
-    "Content-Length: 5\r\n"
-    "\r\n"
-    "Byeee";
+const char* http_resp_generate(char* buff, size_t buff_len, http_status status, size_t body_len){
+    int n = 0;
+    memset(buff, 0, buff_len);
 
-static const char resp_404[] =
-    "HTTP/1.0 404 Not Found\r\n"
-    "Content-Length: 9\r\n"
-    "\r\n"
-    "Not Found";
+    n = sprintf(buff, "%s %d %s" CRLF, "HTTP/1.0", status, http_status_to_string(status));
+    n = sprintf(buff+n , "Content-Length: %zu" CRLF, body_len);
+    n = sprintf(buff+n, CRLF);
+    return buff;
+}
 
 int handle_client(int client_socket){
     char buff[4096];
-    ssize_t used = 0;
+    size_t used = 0;
 
     for( ;; ){
         ssize_t n = read(client_socket,
@@ -162,7 +192,7 @@ int main(void){
         sizeof(enabled)
     );
 
-    bind_addr.sin_port = htons(1337);
+    bind_addr.sin_port = htons(PORT);
     bind_addr.sin_family = AF_INET;
     bind_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
@@ -185,7 +215,7 @@ int main(void){
         ret = 1;
         goto exit;
     }
-    printf("listen succeeded\n");
+    printf("listening on http://localhost:%d/\n", PORT);
     for( ;; ){
         printf("waiting for connections...\n");
         client_socket = accept(tcp_socket, NULL, NULL);
