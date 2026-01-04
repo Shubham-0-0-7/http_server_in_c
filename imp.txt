@@ -183,3 +183,18 @@ like suppose u did localhost:1337/hello  ... so what router will do is simple
 it will check if /hello exits .. then it will redirect .. if not then will give a 404 error 
 as simple as that 
 
+then we have one function such as http_send_resp which used send()
+The system calls send(), sendto(), and sendmsg() are used to transmit a message to another socket.
+
+The send() call may be used only when the socket is in a connected state 
+(so that the intended recipient is known). 
+The only difference between send() and write(2) is the presence of flags. 
+With a zero flags argument, send() is equivalent to write(2).
+
+source: https://man.archlinux.org/man/send.2
+
+The send() function shall initiate transmission of a message from the specified socket to its peer. 
+The send() function shall send a message only when the socket is connected. 
+If the socket is a connectionless-mode socket, the message shall be sent to the pre-specified peer address.
+
+source: https://man.archlinux.org/man/send.3p

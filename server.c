@@ -100,14 +100,21 @@ static const char resp_hello[] = "Hellooo";
 static const char resp_bye[] = "Byeee";
 static const char resp_404[] = "Not Found";
 
-const char* http_resp_generate(char* buff, size_t buff_len, http_status status, size_t body_len){
+string http_resp_generate(char* buff, size_t buff_len, http_status status, size_t body_len){
     int n = 0;
+    string response;
+    response.len = 0;
     memset(buff, 0, buff_len);
 
-    n = sprintf(buff, "%s %d %s" CRLF, "HTTP/1.0", status, http_status_to_string(status));
-    n = sprintf(buff+n , "Content-Length: %zu" CRLF, body_len);
-    n = sprintf(buff+n, CRLF);
-    return buff;
+    response.len += sprintf(buff, "%s %d %s" CRLF, "HTTP/1.0", status, http_status_to_string(status));
+    response.len += sprintf(buff+response.len , "Content-Length: %zu" CRLF, body_len);
+    response.len += sprintf(buff+response.len, CRLF);
+    response.data = buff;
+    return response;
+}
+
+bool http_send_resp(int socket, string header, string body){
+    ssize_t n = send(socket, header.data, header.len, 0);
 }
 
 int handle_client(int client_socket){
