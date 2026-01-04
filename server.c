@@ -115,11 +115,24 @@ string http_resp_generate(char* buff, size_t buff_len, http_status status, size_
 
 bool http_send_resp(int socket, string header, string body){
     ssize_t n = send(socket, header.data, header.len, 0);
+    if(n < 0){
+        perror("send()");
+        return false;
+    }
+    if(n == 0){
+        fprintf(stderr, "send() returned 0\n");
+        return false;
+    }
+    n = send(socket, body.data, body.len, 0);
+    return true;
 }
 
 int handle_client(int client_socket){
     char buff[4096];
     size_t used = 0;
+    string hello_body = string_from_cstr("Hellowww");
+    string bye_body = string_from_cstr("byeee byeee");
+    string error = string_from_cstr("Error 404: Not Found!");
 
     for( ;; ){
         ssize_t n = read(client_socket,
@@ -155,13 +168,22 @@ int handle_client(int client_socket){
         string route_bye = string_from_cstr("/bye");
 
         if(string_equal(req.uri, route_hello)){
-            write(client_socket, resp_hello, strlen(resp_hello));
+            http_send_resp(
+            client_socket, 
+            http_resp_generate(buff, sizeof(buff), HTTP_RES_OK, hello_body.len), 
+            hello_body);
         }
         else if(string_equal(req.uri, route_bye)){
-            write(client_socket, resp_bye, strlen(resp_bye));
+            http_send_resp(
+            client_socket, 
+            http_resp_generate(buff, sizeof(buff), HTTP_RES_OK, bye_body.len), 
+            bye_body);
         }
         else{
-            write(client_socket, resp_404, strlen(resp_404));
+            http_send_resp(
+            client_socket, 
+            http_resp_generate(buff, sizeof(buff), HTTP_RES_OK, error.len), 
+            error);
         }
         close(client_socket);
         return 0;
