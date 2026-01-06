@@ -221,7 +221,7 @@ int main(void){
     tcp_socket = socket(
         AF_INET, //ipv4
         SOCK_STREAM, //tcp
-        0 // dont care
+        0 //dont care
     );
 
     //initialize

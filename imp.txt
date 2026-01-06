@@ -57,7 +57,6 @@ then writes those raw bytes into tcp socket ..
 read() is simply retrieving those same bytes on our side 
 below is what read() read 
 
-
 socket creation succeeded
 bind succeeded
 listen succeeded
@@ -82,7 +81,6 @@ Sec-Fe
 => tch-Site: none
 Priority: u=0, i
 
-
 we were facing a problem which goes like:                         
 socket creation succeeded
 bind(): Address already in use
@@ -94,7 +92,6 @@ tcp connections are still in TIME_WAIT
 now what does SOL_SOCKER used for?
 well ... SOL_SOCKET is the socket layer itself. It is used for options that are protocol independent.
 source: https://stackoverflow.com/questions/21515946/what-is-sol-socket-used-for
-
 
 SO_REUSEADDR tells the kernel to allow rebinding a port even if old TCP connections are still lingering in TIME_WAIT ... 
 this solves “address already in use” during restart 
@@ -114,17 +111,14 @@ https://www.rfc-editor.org/rfc/rfc1945#section-4.1
                          | Entity-Header )       ; Section 7.1
                         CRLF
                         [ Entity-Body ]          ; Section 7.2
-
 this is given there ... so CRLF is there 
 which means 
 CR - carriage return means \r
 LF - line feed means \n
 
 CRLF = "\r\n" = 0x0D 0x0A
-
 i also asked gpt about this .. i was having confusion 
 it said -
-
 CRLF is strictly defined by the HTTP RFC as the byte sequence \r\n, 
 and every compliant HTTP implementation must use it exactly.
 This isn’t opinion, habit, or OS behavior — it’s protocol law.
@@ -132,8 +126,6 @@ This isn’t opinion, habit, or OS behavior — it’s protocol law.
 below given is the request line format given in section 5.1 of rfc 1945
 Request-Line = Method SP Request-URI SP HTTP-Version CRLF
 https://www.rfc-editor.org/rfc/rfc1945#section-5.1
-
-
 tried write parser like as seen in the commented code but yeah nvm ... was not able to comply with such complexity 
 it was getting way too complex so decided to keep it as simple as it could be 
 
@@ -215,3 +207,70 @@ below given is a testing
 └─$ curl --path-as-is http://localhost:1337/../hello
 Error 404: Not Found!%  
 
+some things to clarify or you can say you must understand ...
+
+
+1. tcp is a stream, not message based
+tcp doesnt preserver msg boundaries ... that is one write() on client != one read() on the server 
+headers can arrive separated or split across reads ... or multiple req can arrive in one read
+thats why ..
+i accumulated data in buffer ... waited for CRLF CRLF (that is two \r\n) "\r\n\r\n" and parsed only after i detected a complete http header
+this helps in understanding transport vs protocol framing
+
+
+2. browsers normalize paths, attackers dont!
+what browsers do yk .. they clean up the urls, collapse ../ and hide malicious intent 
+but what attackers will do ... they will send raw tcp payloads and bypass browser behavior
+thats why browser testing is misleading and i went with curl --path-as-is and netcat 
+this helped me got one thing  ... that security decisions must be based on raw inputs and not browser behaviors
+
+
+3. server side validation is a security boundary
+clients cannot be trusted .. validation must happen after parsing and before routing ... 
+if invalid input reaches routing then it is a bug 
+my server rejects early traversal and never fixes malicious inputs and is not normalizing '..'
+i mean this is nto feature, its just defensive programming
+
+
+4. parsing, validation and normalization all three are different 
+what are they lets understand
+parsing means "is this syntactically correct?"
+validation means "is this allowed?"
+normalization means "what is the canonical form?"
+
+so mixing them can causes bugs and issues so i kept them seperate 
+
+
+5. memory safety came from bounded buffers + zero copy views 
+i used fixed size buffers, explicit length tracking and struct string{data,len} instead of null terminated assumptions
+there is no heap allocation, no strcpy, no unchecked pointer arithmetic
+
+since i havent used heap allocation in request path, it gives me few benefits like
+no leaks
+no fragmentation etc etc
+and a predictable behavior 
+
+the entire request life cycle lives on stack
+
+every read/write has a maximum size and checks remaining capacity and also fails safely if exceeded 
+this prevents buffer overflow, memory corruption and remote crashes 
+
+further more,
+i am not assuming that paths are safe or headers are complete or strings are null terminated or even browsers behave correctly and things like that
+everything is checked in the code
+
+request life cycle in one para:
+in my server a request is not treated as some high level object but simply as raw bytes coming from a tcp connection. 
+after accept() i only get a connected socket, not an http request. tcp is stream based so one read() does not mean one 
+full request, headers can come split across multiple reads. because of this i keep reading into a fixed size buffer and 
+do not start parsing immediately. parsing only begins after i explicitly detect the http framing boundary which is 
+CRLF CRLF (\r\n\r\n), since that marks the end of http headers. once the full header is present, i extract only the request 
+line and parse it into method, uri and version based on spaces. parsing here only checks syntax, it does not decide whether 
+the input is safe. after parsing i perform server side validation on the uri, this is the security boundary of the server. 
+at this stage i reject any path that is invalid or attempts traversal like ".." before routing or filesystem access is even 
+considered. browsers may normalize paths but attackers do not, so validation is done on raw input. optional path normalization 
+can be applied only to already valid paths for consistency, but malicious input is never rewritten. routing is then done 
+using simple string comparisons. the http response is constructed explicitly according to the protocol, including version, 
+status code, reason phrase and content length. the response is written to the socket and the connection is closed using 
+http/1.0 semantics. the entire request lifecycle uses bounded stack buffers, zero copy string views and no heap allocation, 
+giving predictable memory usage, clear ownership and memory safety by design.
