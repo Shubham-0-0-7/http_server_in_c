@@ -4,7 +4,27 @@ this project is a minimal http/1.0 server written in c with focus on **correctne
 
 this is not a production server and does not aim to be one. it is a learning project meant to build a correct mental model of tcp, http parsing, and defensive server design.
 
----
+# References 
+### System Programming & Man Pages 
+
+https://man.archlinux.org/man/sockaddr_in.3type   
+https://man.archlinux.org/man/bind.2  
+https://man.archlinux.org/man/listen.2   
+https://man.archlinux.org/man/accept.2    
+https://man.archlinux.org/man/read.2   
+https://man.archlinux.org/man/memcmp.3   
+https://man.archlinux.org/man/send.2  
+https://man.archlinux.org/man/send.3p 
+
+### HTTP Standards & Evolution  
+https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Evolution_of_HTTP  
+https://en.wikipedia.org/wiki/HTTP  
+https://www.rfc-editor.org/rfc/rfc1945  
+https://www.rfc-editor.org/rfc/rfc1945#section-4.1   
+https://www.rfc-editor.org/rfc/rfc1945#section-5.1  
+
+### Technical Resources
+https://stackoverflow.com/questions/21515946/what-is-sol-socket-used-for  
 
 ## motivation
 
