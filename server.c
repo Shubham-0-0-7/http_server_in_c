@@ -96,12 +96,11 @@ static int parse_req_line(char* line, http_req_line* out){
     return 0;
 }
 
-static const char resp_hello[] = "Hellooo";
-static const char resp_bye[] = "Byeee";
-static const char resp_404[] = "Not Found";
+// static const char resp_hello[] = "Hellooo";
+// static const char resp_bye[] = "Byeee";
+// static const char resp_404[] = "Not Found";
 
 string http_resp_generate(char* buff, size_t buff_len, http_status status, size_t body_len){
-    int n = 0;
     string response;
     response.len = 0;
     memset(buff, 0, buff_len);

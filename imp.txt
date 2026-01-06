@@ -91,6 +91,11 @@ so we used setsockopt ... what it did was ... it told the kernel to relax its
 default rule and allow your server to re bind to the same port even if previous 
 tcp connections are still in TIME_WAIT
 
+now what does SOL_SOCKER used for?
+well ... SOL_SOCKET is the socket layer itself. It is used for options that are protocol independent.
+source: https://stackoverflow.com/questions/21515946/what-is-sol-socket-used-for
+
+
 SO_REUSEADDR tells the kernel to allow rebinding a port even if old TCP connections are still lingering in TIME_WAIT ... 
 this solves “address already in use” during restart 
 
