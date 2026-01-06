@@ -96,6 +96,18 @@ static int parse_req_line(char* line, http_req_line* out){
     return 0;
 }
 
+bool is_valid_uri(string uri){
+    if(uri.len == 0) return false;
+    if(uri.data[0] != '/') return false;
+
+    for(size_t i=0; i+1 < uri.len; i++){
+        if(uri.data[i] == '.' && uri.data[i+1] == '.'){
+            return false;
+        }
+    }
+    return true;
+}
+
 // static const char resp_hello[] = "Hellooo";
 // static const char resp_bye[] = "Byeee";
 // static const char resp_404[] = "Not Found";
@@ -158,6 +170,14 @@ int handle_client(int client_socket){
 
         http_req_line req;
         if(parse_req_line(buff, &req) != 0) return -1;
+
+        if(!is_valid_uri(req.uri)){
+            http_send_resp(client_socket, 
+                http_resp_generate(buff, sizeof(buff), HTTP_RES_BAD_REQ, error.len), 
+                error);
+            close(client_socket);
+            return 0;
+        }
 
         printf("METHOD:  %.*s\n", (int)req.method.len, req.method.data);
         printf("URI:     %.*s\n", (int)req.uri.len, req.uri.data);

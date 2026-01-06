@@ -203,3 +203,15 @@ The send() function shall send a message only when the socket is connected.
 If the socket is a connectionless-mode socket, the message shall be sent to the pre-specified peer address.
 
 source: https://man.archlinux.org/man/send.3p
+
+now we have one important thing left to add on that is path validation ...
+like check the url such as localhost:1337/../hello should give you an error (try using curl -path-as-is or use nc localhost 1337) because browser might resolve the url and will redirect to /hello
+
+why we are doing this because we need to reject '..' these .. and what path validation gives us is no directory traversal...no unsafe filesystem access and no silent rewriting of malicious input 
+and thats important from security point of view 
+
+below given is a testing
+┌──(sssubhammm ⌘ macbook-air)-[~]
+└─$ curl --path-as-is http://localhost:1337/../hello
+Error 404: Not Found!%  
+
