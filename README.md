@@ -24,6 +24,7 @@ https://www.rfc-editor.org/rfc/rfc1945#section-4.1
 https://www.rfc-editor.org/rfc/rfc1945#section-5.1  
 
 ### Technical Resources
+https://beej.us/guide/bgnet/html/ (very useful)   
 https://stackoverflow.com/questions/21515946/what-is-sol-socket-used-for  
 
 ## motivation
