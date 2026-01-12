@@ -7,6 +7,7 @@ then error is returned
 
 https://man.archlinux.org/man/sockaddr_in.3type
 
+
 struct sockaddr_in {
     sa_family_t     sin_family;     /* AF_INET */
     in_port_t       sin_port;       /* Port number */
